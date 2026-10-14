@@ -4,7 +4,7 @@ Santa appearance website with event requests, pricing placeholders, and Santa St
 
 ## Hosting
 
-Vercel serves `dist/` as a static website. The production branch is `main`.
+Vercel serves `dist/` as a static website. The production branch is `main`. No install or build step is needed.
 
 ## Booking
 
