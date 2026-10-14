@@ -4,7 +4,7 @@ Static website in `dist/`, deployed from GitHub main to Vercel. `/api/booking` i
 
 ## Current status
 
-Connection code is prepared. Google Apps Script must be authorized and deployed, and Vercel environment variables must be configured before online submissions activate. Until then the form keeps an email option addressed to Santa. No approval-routing addresses appear in frontend code.
+Production is connected to the Google Sheets backend through an authorized Apps Script web app. Vercel production environment variables are configured. Online requests save to the Bookings tab and send private approval and Santa notifications. No approval-routing addresses appear in frontend code.
 
 ## One-time Google setup
 
@@ -23,6 +23,6 @@ Private approval email goes to the Settings tab Approval email value. Santa rece
 
 Requesters see confirmation on the website, without internal email recipients. Changing a row to Approved does not send a customer email automatically; send confirmations directly after approving arrangements.
 
-## Verification still required
+## Verification
 
-No live request has been sent yet. After authorization, test one clearly labeled request, verify its sheet row and private emails, and remove the test row if desired. Keep customer data and backend credentials out of public GitHub files.
+A clearly labeled live connection test succeeded: the website displayed its request reference, the row saved to Google Sheets, and the notification status recorded Sent. The test was marked Cancelled with a note that no visit is scheduled. Keep customer data and backend credentials out of public GitHub files.
