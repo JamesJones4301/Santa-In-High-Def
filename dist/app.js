@@ -5,10 +5,37 @@ dateInput.min=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate()
 document.getElementById('year').textContent=now.getFullYear();
 document.querySelectorAll('[data-service]').forEach(a=>a.addEventListener('click',()=>{form.elements.experience.value=a.dataset.service;}));
 let request='';
-form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;if(dateInput.value<dateInput.min){dateInput.setCustomValidity('Choose today or a future date.');dateInput.reportValidity();return;}const f=new FormData(form);request=`Hello Santa In High Def,\n\nI would like to request a Santa appearance.\n\nName: ${f.get('name')}\nEmail: ${f.get('email')}\nPhone: ${f.get('phone')}\nOrganization: ${f.get('company')||'Not specified'}\nEvent type: ${f.get('eventType')}\nExperience: ${f.get('experience')}\nPreferred date: ${f.get('date')}\nPreferred time: ${f.get('time')} (${f.get('timezone')})\nVisit length: ${f.get('duration')}\nEstimated guests: ${f.get('guests')}\nLocation: ${f.get('location')}\nChristmas music: ${f.get('music')}\n\nEvent details:\n${f.get('details')}\n\nPlease share availability, pricing, and next steps. I understand this request does not confirm a booking.\n\nThank you!`;
-document.getElementById('request-text').textContent=request;document.getElementById('email-request').href=`mailto:3angleevents@gmail.com?cc=santainhd%40gmail.com&subject=${encodeURIComponent('Santa appearance request: '+f.get('date')+' - '+f.get('experience'))}&body=${encodeURIComponent(request)}`;const review=document.getElementById('review');review.hidden=false;document.getElementById('copy-request').textContent='Copy request';review.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});});
+let backendReady=false;
+let bookingRequestId=null;
+const submitButton=form.querySelector('button[type="submit"]');
+fetch('/api/booking').then(r=>r.json()).then(config=>{
+  backendReady=config.ready===true;
+  if(backendReady){submitButton.textContent='Submit my request ↗';form.querySelector('.form-note').textContent='Share your plans for a Santa visit. Your date is reserved after you receive booking confirmation.';const notes=form.querySelectorAll('.form-note');notes[notes.length-1].textContent='Submit your request securely. We’ll follow up about your visit.';}
+}).catch(()=>{});
+
+form.addEventListener('submit',async e=>{e.preventDefault();if(!form.reportValidity())return;if(dateInput.value<dateInput.min){dateInput.setCustomValidity('Choose today or a future date.');dateInput.reportValidity();return;}const f=new FormData(form);
+if(backendReady){
+  if(!bookingRequestId)bookingRequestId=crypto.randomUUID();
+  submitButton.disabled=true;submitButton.textContent='Sending your request…';
+  const review=document.getElementById('review');
+  review.hidden=false;review.querySelector('.actions').hidden=true;
+  document.getElementById('request-text').textContent='';
+  document.getElementById('send-status').textContent='Sending your request…';
+  try{
+    const response=await fetch('/api/booking',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...Object.fromEntries(f),requestId:bookingRequestId,website:form.elements.website.value})});
+    const result=await response.json();
+    if(!response.ok||!result.ok)throw new Error(result.message||'We could not confirm your request. Please try again.');
+    document.getElementById('request-text').textContent='Request received. Reference: '+result.requestId;
+    document.getElementById('send-status').textContent='Thank you for inviting Santa In High Def. We’ll follow up with availability and pricing. Your date is reserved after booking confirmation.';
+    bookingRequestId=null;form.reset();
+  }catch(error){document.getElementById('send-status').textContent=error.message||'Unable to confirm your request. Please try again.';}
+  finally{submitButton.disabled=false;submitButton.textContent='Submit my request ↗';}
+  return;
+}
+request=`Hello Santa In High Def,\n\nI would like to request a Santa appearance.\n\nName: ${f.get('name')}\nEmail: ${f.get('email')}\nPhone: ${f.get('phone')}\nOrganization: ${f.get('company')||'Not specified'}\nEvent type: ${f.get('eventType')}\nExperience: ${f.get('experience')}\nPreferred date: ${f.get('date')}\nPreferred time: ${f.get('time')} (${f.get('timezone')})\nVisit length: ${f.get('duration')}\nEstimated guests: ${f.get('guests')}\nLocation: ${f.get('location')}\nChristmas music: ${f.get('music')}\n\nEvent details:\n${f.get('details')}\n\nPlease share availability, pricing, and next steps. I understand this request does not confirm a booking.\n\nThank you!`;
+document.getElementById('request-text').textContent=request;document.getElementById('email-request').href=`mailto:santainhd@gmail.com?subject=${encodeURIComponent('Santa appearance request: '+f.get('date')+' - '+f.get('experience'))}&body=${encodeURIComponent(request)}`;const review=document.getElementById('review');review.querySelector('.actions').hidden=false;review.hidden=false;document.getElementById('copy-request').textContent='Copy request';review.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});});
 dateInput.addEventListener('input',()=>dateInput.setCustomValidity(''));
-form.addEventListener('input',()=>{document.getElementById('review').hidden=true;});
+form.addEventListener('input',()=>{bookingRequestId=null;document.getElementById('review').hidden=true;});
 document.getElementById('copy-request').addEventListener('click',async e=>{try{await navigator.clipboard.writeText(request);e.target.textContent='Copied';}catch{const selection=window.getSelection();const range=document.createRange();range.selectNodeContents(document.getElementById('request-text'));selection.removeAllRanges();selection.addRange(range);document.getElementById('send-status').textContent='Select and copy the highlighted request, then paste it into your email app.';}});
 
 // One copy of each photo. Advance by scrolling the gallery items.
